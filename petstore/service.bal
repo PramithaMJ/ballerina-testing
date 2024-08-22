@@ -1,17 +1,38 @@
 import ballerina/http;
 
-# A service representing a network-accessible API
-# bound to port `9090`.
-service / on new http:Listener(9090) {
+configurable int port = 9090;
+configurable string host = "localhost";
 
-    # A resource for generating greetings
-    # + name - the input string name
-    # + return - string name with hello message or error
-    resource function get greeting(string name) returns string|error {
-        // Send a response back to the caller.
-        if name is "" {
-            return error("name should not be empty!");
+listener http:Listener petstorelistner = new (port,config={host});
+
+type Pet record{
+    string id;
+    string name;
+    boolean isAvailable;
+};
+
+service / on petstorelistner {
+    map<Pet> petInventory = {};
+
+    resource function get pet/[string petId]() returns http:NotFound|Pet {
+        Pet? pet  =self.petInventory[petId];
+        
+        if pet is (){
+            return <http:NotFound>{ body:"No pet found with given id " + petId };
         }
-        return "Hello, " + name;
+        return pet;
+    }
+
+    resource function post pet(Pet payload) returns http:MethodNotAllowed|Pet {
+       Pet? pet = self.petInventory[payload.id];
+
+       if pet is Pet{
+        return <http:MethodNotAllowed>{body:"A pet with given id " + payload.id +
+        "is already available in petstore"};
+       }
+
+       self.petInventory[payload.id]=payload;
+
+       return payload; 
     }
 }
