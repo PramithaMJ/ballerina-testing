@@ -1,12 +1,15 @@
+import ballerina/test;
 import ballerina/http;
 
-service http:Service /foo on new http:Listener(9090) {
+http:Client testClient = check new ("http://localhost:9090/foo");
 
-    resource function get bar(int value) returns http:Ok|http:BadRequest {
+@test:Config
+public function testGet() returns error? {
+    http:Response response = check testClient->/bar.get(value = 10);
+    test:assertEquals(response.statusCode, http:STATUS_OK);
+    test:assertEquals(response.getTextPayload(), "Retrieved ID 10");
 
-        if value < 0 {
-            return <http:BadRequest>{body: "Incorrect ID value"};
-        }
-        return <http:Ok>{body: "Retrieved ID " + value.toString()};
-    }
+    response = check testClient->/bar.get(value = -5);
+    test:assertEquals(response.statusCode, http:STATUS_BAD_REQUEST);
+    test:assertEquals(response.getTextPayload(), "Incorrect ID value");
 }
