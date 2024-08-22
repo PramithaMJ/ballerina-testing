@@ -1,4 +1,5 @@
 import ballerina/test;
+
 @test:Config{}
 function testIsEven(){
     test:assertEquals(isEven(4),true,msg = "fail to identify an even number");
