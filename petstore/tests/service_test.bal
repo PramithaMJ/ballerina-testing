@@ -1,37 +1,15 @@
-import ballerina/io;
 import ballerina/http;
 import ballerina/test;
 
-http:Client testClient = check new ("http://localhost:9090");
+string petstoreUrl = "http://localhost:9090";
 
-// Before Suite Function
+http:Client petstoreClient = check new(petstoreUrl);
 
-@test:BeforeSuite
-function beforeSuiteFunc() {
-    io:println("I'm the before suite function!");
-}
+@test:Config{}
 
-// Test function
-
-@test:Config {}
-function testServiceWithProperName() {
-    string|error response = testClient->get("/greeting/?name=John");
-    test:assertEquals(response, "Hello, John");
-}
-
-// Negative test function
-
-@test:Config {}
-function testServiceWithEmptyName() returns error? {
-    http:Response response = check testClient->get("/greeting/?name=");
-    test:assertEquals(response.statusCode, 500);
-    json errorPayload = check response.getJsonPayload();
-    test:assertEquals(errorPayload.message, "name should not be empty!");
-}
-
-// After Suite Function
-
-@test:AfterSuite
-function afterSuiteFunc() {
-    io:println("I'm the after suite function!");
+function addNewPetTest() returns error? {
+    http:Response response =check petstoreClient->/pet.post({id:"P001",name:"Dakota",isAvailable:true});
+    test:assertEquals(response.statusCode,http:STATUS_CREATED,"New Pet addition fails");
+    test:assertEquals(response.getJsonPayload(),{id:"P001",name:"Dakota",isAvailable:true},
+    "New creation did not return expected message");
 }
