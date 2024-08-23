@@ -1,9 +1,17 @@
 import ballerina/http;
 import ballerina/test;
+import ballerina/io;
 
 string petstoreUrl = "http://localhost:9090";
 
 http:Client petstoreClient = check new(petstoreUrl);
+
+@test:BeforeEach
+function printPetDetails() {
+    map<Pet>|http:ClientError pets = petstoreClient->/pets;
+    io:println("Pet details before test run: ",pets);
+    
+}
 
 @test:Config{}
 function getNonExistPetDetails() returns error?{
@@ -15,11 +23,19 @@ function getNonExistPetDetails() returns error?{
 @test:Config{
     dependsOn: [getNonExistPetDetails]
 }
-function addNewPetTest() returns error? {
-    http:Response response =check petstoreClient->/pet.post({id:"P001",name:"Dakota",isAvailable:true});
+function addNewPetTest(Pet pet) returns error? {
+    http:Response response =check petstoreClient->/pet.post(pet);
     test:assertEquals(response.statusCode,http:STATUS_CREATED,"New Pet addition fails");
-    test:assertEquals(response.getJsonPayload(),{id:"P001",name:"Dakota",isAvailable:true},
+    test:assertEquals(response.getJsonPayload(),pet,
     "New creation did not return expected message");
+}
+
+function petData() returns map<[Pet]>|error{
+    return{
+        "P001":[{id:"P001",name:"Dakota",isAvailable: true}],
+        "P002":[{id:"P002",name:"Bella",isAvailable: true}],
+        "P003":[{id:"P003",name:"Charlie",isAvailable: true}]
+    };
 }
 
 @test:Config{

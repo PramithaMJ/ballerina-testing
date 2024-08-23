@@ -28,11 +28,15 @@ service / on petstorelistner {
 
        if pet is Pet{
         return <http:MethodNotAllowed>{body:"A pet with given id " + payload.id +
-        "is already available in petstore"};
+        " is already available in petstore"};
        }
 
        self.petInventory[payload.id]=payload;
 
        return payload; 
+    }
+
+    resource function get pets() returns map<Pet> {
+        return self.petInventory;
     }
 }
